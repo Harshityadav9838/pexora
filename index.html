@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pexora — every PDF tool, processed in your browser</title>
+<meta name="description" content="Merge, split, organize, convert and watermark PDFs. Nothing you process ever leaves your device." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink-black:#0B0E14;
+  --panel:#12151F;
+  --panel-2:#191D29;
+  --paper:#EFE9DC;
+  --paper-dim:#D9D2BF;
+  --stamp:#C1440E;
+  --stamp-bright:#E8592A;
+  --teal:#2F6F63;
+  --line:rgba(239,233,220,0.12);
+  --line-strong:rgba(239,233,220,0.22);
+  --text-hi:#F4F1E8;
+  --text-mid:#B8B4A8;
+  --text-dim:#7A7768;
+  --radius:14px;
+  --shadow-deep: 0 40px 80px -20px rgba(0,0,0,0.6), 0 10px 24px -8px rgba(0,0,0,0.5);
+  --shadow-soft: 0 16px 40px -12px rgba(0,0,0,0.45);
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+[data-theme="light"]{
+  --ink-black:#EFE9DC;
+  --panel:#FBF9F3;
+  --panel-2:#F3EEE1;
+  --paper:#0B0E14;
+  --paper-dim:#12151F;
+  --line:rgba(11,14,20,0.1);
+  --line-strong:rgba(11,14,20,0.2);
+  --text-hi:#12151F;
+  --text-mid:#4A4738;
+  --text-dim:#8B876F;
+  --shadow-deep: 0 40px 80px -20px rgba(11,14,20,0.18), 0 10px 24px -8px rgba(11,14,20,0.12);
+  --shadow-soft: 0 16px 40px -12px rgba(11,14,20,0.14);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--ink-black);
+  color:var(--text-hi);
+  font-family:var(--font-body);
+  min-height:100vh;
+  transition:background .3s ease, color .3s ease;
+  overflow-x:hidden;
+}
+a{color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+::selection{background:var(--stamp); color:#fff;}
+
+.skip-link{position:absolute; left:-999px; top:0; background:var(--stamp); color:#fff; padding:10px 16px; z-index:999;}
+.skip-link:focus{left:10px; top:10px;}
+
+/* ---------- Header ---------- */
+header.site{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px clamp(16px,4vw,48px);
+  background:color-mix(in srgb, var(--ink-black) 82%, transparent);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:1.3rem; font-weight:600; letter-spacing:.01em;}
+.brand-mark{
+  width:30px; height:30px; border-radius:6px;
+  background:linear-gradient(145deg, var(--stamp-bright), var(--stamp));
+  display:flex; align-items:center; justify-content:center;
+  transform:perspective(200px) rotateY(-18deg) rotateX(8deg);
+  box-shadow:4px 6px 14px -4px rgba(193,68,14,0.5);
+  color:#fff; font-family:var(--font-mono); font-weight:700; font-size:.8rem;
+}
+nav.site-nav{display:flex; align-items:center; gap:28px; font-size:.92rem;}
+nav.site-nav a{text-decoration:none; color:var(--text-mid); transition:color .2s;}
+nav.site-nav a:hover, nav.site-nav a:focus-visible{color:var(--text-hi);}
+.theme-toggle{
+  border:1px solid var(--line-strong); background:transparent; color:var(--text-hi);
+  width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  transition:transform .2s, border-color .2s;
+}
+.theme-toggle:hover{border-color:var(--stamp); transform:translateY(-2px);}
+.header-right{display:flex; align-items:center; gap:16px;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; gap:8px; justify-content:center;
+  padding:13px 26px; border-radius:10px; border:1px solid transparent;
+  font-weight:600; font-size:.95rem; text-decoration:none;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.btn-primary{
+  background:linear-gradient(160deg, var(--stamp-bright), var(--stamp));
+  color:#fff; box-shadow:0 12px 26px -10px rgba(193,68,14,0.55);
+}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:0 18px 34px -10px rgba(193,68,14,0.65);}
+.btn-ghost{background:transparent; border-color:var(--line-strong); color:var(--text-hi);}
+.btn-ghost:hover{border-color:var(--stamp); transform:translateY(-2px);}
+.btn:disabled{opacity:.5; cursor:not-allowed; transform:none !important;}
+.btn-sm{padding:9px 16px; font-size:.85rem; border-radius:8px;}
+
+/* ---------- Hero: 3D paper stack ---------- */
+.hero{
+  position:relative;
+  padding:clamp(64px,10vw,120px) clamp(16px,4vw,48px) 80px;
+  display:grid; grid-template-columns:1.1fr .9fr; gap:40px; align-items:center;
+  perspective:1400px;
+}
+.hero-eyebrow{
+  font-family:var(--font-mono); font-size:.78rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--stamp-bright); margin-bottom:18px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow::before{content:''; width:22px; height:1px; background:var(--stamp-bright);}
+.hero h1{
+  font-family:var(--font-display); font-weight:600; font-size:clamp(2.6rem,5vw,4.2rem);
+  line-height:1.02; letter-spacing:-0.01em; max-width:14ch;
+}
+.hero h1 em{font-style:italic; color:var(--stamp-bright);}
+.hero p.lead{margin-top:22px; font-size:1.15rem; color:var(--text-mid); max-width:46ch; line-height:1.6;}
+.hero-actions{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap;}
+.hero-stack{position:relative; height:420px;}
+.stack-sheet{
+  position:absolute; inset:0; margin:auto; width:280px; height:360px;
+  background:var(--paper); border-radius:8px;
+  box-shadow:var(--shadow-deep);
+  transform-style:preserve-3d;
+  transition:transform .5s cubic-bezier(.2,.8,.2,1);
+}
+.stack-sheet .sheet-lines{padding:26px 22px;}
+.stack-sheet .sheet-lines div{height:8px; border-radius:2px; background:var(--paper-dim); margin-bottom:12px;}
+.stack-sheet .sheet-lines div:nth-child(1){width:60%;}
+.stack-sheet .sheet-lines div:nth-child(4){width:40%;}
+.stack-sheet .sheet-tag{
+  position:absolute; bottom:22px; left:22px; font-family:var(--font-mono); font-size:.7rem;
+  color:var(--text-dim);
+}
+
+/* ---------- Security strip ---------- */
+.strip{
+  display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+}
+.strip-item{
+  flex:1 1 220px; padding:22px clamp(16px,3vw,40px); border-left:1px solid var(--line);
+  font-size:.88rem; color:var(--text-mid);
+}
+.strip-item:first-child{border-left:none;}
+.strip-item strong{display:block; color:var(--text-hi); font-family:var(--font-mono); font-size:.78rem; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;}
+
+/* ---------- Tool grid ---------- */
+section.section{padding:80px clamp(16px,4vw,48px);}
+.section-head{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:36px; flex-wrap:wrap;}
+.section-head h2{font-family:var(--font-display); font-size:clamp(1.8rem,3vw,2.5rem); font-weight:600;}
+.section-head p{color:var(--text-mid); max-width:50ch;}
+.tool-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px;}
+.tool-card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px; text-align:left; color:var(--text-hi); text-decoration:none;
+  display:flex; flex-direction:column; gap:14px; min-height:150px;
+  transform-style:preserve-3d; transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  position:relative; overflow:hidden;
+}
+.tool-card::after{
+  content:''; position:absolute; inset:0; opacity:0; background:radial-gradient(circle at 30% 20%, rgba(193,68,14,0.18), transparent 60%);
+  transition:opacity .25s ease;
+}
+.tool-card:hover{transform:translateY(-6px) rotateX(2deg); border-color:var(--line-strong); box-shadow:var(--shadow-soft);}
+.tool-card:hover::after{opacity:1;}
+.tool-icon{
+  width:42px; height:42px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  background:var(--panel-2); border:1px solid var(--line-strong); font-family:var(--font-mono); font-size:1.1rem;
+}
+.tool-card h3{font-size:1.02rem; font-weight:600;}
+.tool-card p{font-size:.85rem; color:var(--text-mid); line-height:1.45;}
+.tool-tag{position:absolute; top:14px; right:14px; font-family:var(--font-mono); font-size:.62rem; letter-spacing:.06em; text-transform:uppercase; color:var(--text-dim);}
+
+/* ---------- Tool workspace ---------- */
+.workspace{display:none; padding:48px clamp(16px,4vw,48px) 100px; max-width:1100px; margin:0 auto;}
+.workspace.active{display:block;}
+.workspace-head{margin-bottom:28px;}
+.workspace-head .back{font-family:var(--font-mono); font-size:.78rem; color:var(--text-mid); text-decoration:none; display:inline-flex; gap:6px; align-items:center; margin-bottom:18px;}
+.workspace-head .back:hover{color:var(--stamp-bright);}
+.workspace-head h2{font-family:var(--font-display); font-size:2.1rem; font-weight:600;}
+.workspace-head p{color:var(--text-mid); margin-top:10px; max-width:60ch;}
+
+.dropzone{
+  border:2px dashed var(--line-strong); border-radius:var(--radius); padding:48px 24px;
+  text-align:center; background:var(--panel); transition:border-color .2s, background .2s;
+  cursor:pointer;
+}
+.dropzone.drag{border-color:var(--stamp-bright); background:var(--panel-2);}
+.dropzone .dz-icon{font-family:var(--font-mono); font-size:2rem; margin-bottom:10px; color:var(--text-dim);}
+.dropzone h4{font-size:1rem; margin-bottom:6px;}
+.dropzone p{font-size:.82rem; color:var(--text-dim);}
+.dropzone input{display:none;}
+
+.file-list{margin-top:20px; display:flex; flex-direction:column; gap:10px;}
+.file-row{
+  display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; font-size:.88rem;
+}
+.file-row .fr-name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.file-row .fr-size{color:var(--text-dim); font-family:var(--font-mono); font-size:.78rem;}
+.file-row .fr-remove{background:none; border:none; color:var(--text-dim); font-size:1rem;}
+.file-row .fr-remove:hover{color:var(--stamp-bright);}
+.file-row.reorder{cursor:grab;}
+.file-row .fr-handle{color:var(--text-dim); font-family:var(--font-mono);}
+
+.page-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:20px;}
+.page-thumb{
+  background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px; text-align:center;
+  cursor:grab; transition:border-color .2s, opacity .2s;
+  display:flex; flex-direction:column; gap:6px; align-items:center;
+}
+.page-thumb.selected{border-color:var(--stamp-bright); box-shadow:0 0 0 2px rgba(193,68,14,0.25);}
+.page-thumb.dragging{opacity:.4;}
+.page-thumb canvas{width:100%; border-radius:4px; box-shadow:var(--shadow-soft); transform:rotate(var(--rot,0deg)); transition:transform .2s;}
+.page-thumb .pt-label{font-family:var(--font-mono); font-size:.7rem; color:var(--text-dim);}
+.page-thumb .pt-actions{display:flex; gap:4px;}
+.pt-actions button{background:var(--panel-2); border:1px solid var(--line-strong); color:var(--text-hi); width:24px; height:24px; border-radius:5px; font-size:.72rem;}
+.pt-actions button:hover{border-color:var(--stamp);}
+
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:20px;}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:.8rem; color:var(--text-mid); font-family:var(--font-mono); letter-spacing:.02em;}
+.field input[type=text], .field input[type=number], .field input[type=password], .field select, .field textarea{
+  background:var(--panel-2); border:1px solid var(--line-strong); border-radius:8px; padding:11px 13px;
+  color:var(--text-hi); font-size:.92rem; font-family:inherit;
+}
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible{outline:2px solid var(--stamp-bright); outline-offset:1px;}
+.field-row{display:flex; gap:18px; align-items:center;}
+.checkbox-row{display:flex; align-items:center; gap:8px; font-size:.88rem; color:var(--text-mid);}
+
+.actions-bar{display:flex; gap:12px; margin-top:28px; flex-wrap:wrap; align-items:center;}
+
+.status{margin-top:20px; padding:14px 16px; border-radius:10px; font-size:.88rem; display:none; gap:10px; align-items:flex-start; border:1px solid var(--line-strong);}
+.status.show{display:flex;}
+.status.info{background:var(--panel-2); color:var(--text-mid);}
+.status.error{background:rgba(193,68,14,0.1); border-color:var(--stamp); color:var(--stamp-bright);}
+.status.success{background:rgba(47,111,99,0.12); border-color:var(--teal); color:var(--teal);}
+.progress-track{height:6px; border-radius:3px; background:var(--panel-2); overflow:hidden; margin-top:16px; display:none;}
+.progress-track.show{display:block;}
+.progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--stamp),var(--stamp-bright)); transition:width .2s ease;}
+
+.security-notice{
+  margin-top:32px; padding:16px 18px; border-radius:10px; background:var(--panel); border:1px solid var(--line);
+  font-size:.82rem; color:var(--text-dim); display:flex; gap:10px;
+}
+.security-notice b{color:var(--text-mid);}
+
+footer.site{
+  padding:48px clamp(16px,4vw,48px) 32px; border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:20px; font-size:.85rem; color:var(--text-dim);
+}
+footer.site a{text-decoration:none; color:var(--text-dim);}
+footer.site a:hover{color:var(--stamp-bright);}
+.footer-links{display:flex; gap:20px; flex-wrap:wrap;}
+
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr; text-align:left;}
+  .hero-stack{height:280px;}
+  nav.site-nav{display:none;}
+  .form-grid{grid-template-columns:1fr;}
+}
+@media (max-width:480px){
+  header.site{padding:12px 16px; gap:8px;}
+  .brand{font-size:1.05rem; gap:6px;}
+  .brand-mark{width:26px; height:26px; font-size:.7rem;}
+  .header-right{gap:8px;}
+  .header-right .btn-sm{padding:8px 12px; font-size:.78rem;}
+  .theme-toggle{width:34px; height:34px;}
+  .hero{padding-top:40px;}
+  .hero-actions .btn{flex:1 1 auto; padding:12px 16px; font-size:.88rem;}
+  .strip-item{border-left:none; border-top:1px solid var(--line);}
+  .strip-item:first-child{border-top:none;}
+  .workspace-head h2{font-size:1.6rem;}
+  .file-row{flex-wrap:wrap;}
+  .file-row .fr-name{min-width:0;}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important; animation:none !important;}
+}
+</style>
+</head>
+<body data-theme="dark">
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header class="site">
+  <div class="brand"><span class="brand-mark">PX</span> Pexora</div>
+  <nav class="site-nav" aria-label="Primary">
+    <a href="#tools">All tools</a>
+    <a href="#security">Security</a>
+    <a href="#about-panel" data-page="about">About</a>
+    <a href="#privacy-panel" data-page="privacy">Privacy</a>
+  </nav>
+  <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">◐</button>
+    <a href="#tools" class="btn btn-primary btn-sm">Start using Pexora</a>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- HOME -->
+<div id="home-view">
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">Runs in your browser · no upload required</div>
+      <h1>All your PDF tools, <em>processed on your machine.</em></h1>
+      <p class="lead">Convert, compress, merge, split and manage PDF files quickly — and privately. Every tool below runs client‑side by default: your files are read into memory, processed, and never sent anywhere.</p>
+      <div class="hero-actions">
+        <a href="#tools" class="btn btn-primary">Explore all tools</a>
+        <a href="#security" class="btn btn-ghost">How this works</a>
+      </div>
+    </div>
+    <div class="hero-stack" id="heroStack" aria-hidden="true">
+      <div class="stack-sheet" style="transform:translateZ(-40px) rotate(-6deg);"><div class="sheet-lines"><div></div><div></div><div></div><div></div></div></div>
+      <div class="stack-sheet" style="transform:translateZ(-20px) rotate(4deg);"><div class="sheet-lines"><div></div><div></div><div></div><div></div></div></div>
+      <div class="stack-sheet" id="topSheet"><div class="sheet-lines"><div></div><div></div><div></div><div></div></div><div class="sheet-tag">document.pdf</div></div>
+    </div>
+  </section>
+
+  <div class="strip" id="security">
+    <div class="strip-item"><strong>Processed locally</strong>Organizing, watermarking and conversion tools run entirely in your browser using WebAssembly‑backed libraries. No file upload happens for these tools.</div>
+    <div class="strip-item"><strong>Nothing retained</strong>Because nothing is uploaded, there is nothing on a server to delete, expire, or leak. Closing the tab clears everything from memory.</div>
+    <div class="strip-item"><strong>Validated before use</strong>Every file is checked against its real file signature — not just its name or the extension — before any tool touches it.</div>
+    <div class="strip-item"><strong>Honest about limits</strong>Two conversions (PDF↔Word, HTML→PDF) genuinely need a server and are marked "requires backend" — see the note on each.</div>
+  </div>
+
+  <section class="section" id="tools">
+    <div class="section-head">
+      <div>
+        <h2>Every tool, in one place</h2>
+        <p>Pick a tool below. Nothing is queued or uploaded until you explicitly run it.</p>
+      </div>
+    </div>
+    <div class="tool-grid" id="toolGrid"></div>
+  </section>
+
+  <section class="section" id="about-panel">
+    <div class="section-head"><h2>About Pexora</h2></div>
+    <p style="color:var(--text-mid); max-width:60ch; line-height:1.7;">Pexora is a document utility built around one rule: tools should only claim to work if they actually do. Everything under "All tools" that isn't explicitly marked <em>requires backend</em> runs fully in your browser using <code>pdf-lib</code> for document editing and <code>pdf.js</code> for rendering and text extraction — the same engines used by Firefox's built‑in PDF viewer.</p>
+  </section>
+
+  <section class="section" id="privacy-panel">
+    <div class="section-head"><h2>Privacy</h2></div>
+    <div style="color:var(--text-mid); max-width:64ch; line-height:1.75; font-size:.95rem;">
+      <p><strong style="color:var(--text-hi)">What we collect:</strong> this build collects nothing — there is no analytics script, no cookie banner, and no account system wired up.</p>
+      <p style="margin-top:14px;"><strong style="color:var(--text-hi)">What happens to your files:</strong> for every tool on this page except the two marked "requires backend," your file is read directly into browser memory via the File API and processed with client‑side libraries. It is never attached to a network request.</p>
+      <p style="margin-top:14px;"><strong style="color:var(--text-hi)">The two backend‑only conversions:</strong> PDF↔Word and HTML→PDF need server‑side rendering engines that don't exist in a browser. In this build those tools are disabled with an explanation rather than faked — see <a href="/backend-scaffold" style="color:var(--stamp-bright)">the backend scaffold</a> for how they'd be implemented securely.</p>
+      <p style="margin-top:14px;"><strong style="color:var(--text-hi)">Third parties:</strong> two libraries are loaded from a CDN (cdnjs) at page load — pdf-lib and pdf.js. No file data is sent to that CDN; it only serves the static library code.</p>
+    </div>
+  </section>
+</div>
+
+<!-- TOOL WORKSPACES (populated by JS) -->
+<div id="workspace-root"></div>
+
+</main>
+
+<footer class="site">
+  <div>© 2026 Pexora. Built for this session — client‑side, source‑visible.</div>
+  <div class="footer-links">
+    <a href="#privacy-panel">Privacy</a>
+    <a href="#about-panel">About</a>
+    <a href="#terms-panel">Terms</a>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
+<script src="app.js"></script>
+</body>
+</html>
